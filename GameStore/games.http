@@ -1,0 +1,54 @@
+GET http://localhost:5137/games
+
+###
+GET http://localhost:5137/games/2
+
+###
+POST http://localhost:5137/games
+Content-Type: application/json
+
+{
+  "name": "Game of Thrones: The Role-Playing Game",
+  "genreId": 1,
+  "price": 85.10,
+  "releaseDate": "2020-12-10"
+}
+
+###
+PUT http://localhost:5137/games/6
+Content-Type: application/json
+
+{
+  "name": "Transformers: The Last Knight",
+  "genreId": 4,
+  "price": 25.99,
+  "releaseDate": "2022-03-03"
+}
+
+###
+DELETE http://localhost:5137/games/1
+
+###
+GET http://localhost:5137/genres
+
+###
+GET http://localhost:5137/genres/1
+
+###
+POST http://localhost:5137/genres
+Content-Type: application/json
+
+{
+  "name": "Racing"
+}
+
+###
+PUT http://localhost:5137/genres/6
+Content-Type: application/json
+
+{
+  "name": "Simulation"
+}
+
+###
+DELETE http://localhost:5137/genres/6

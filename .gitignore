@@ -1,0 +1,20 @@
+# Visual Studio / VS Code
+.vs/
+.VS/
+.vscode/
+
+# Build output
+bin/
+obj/
+**/bin/
+**/obj/
+
+# User-specific files
+*.user
+*.suo
+
+# Local database files
+*.db
+*.db-shm
+*.db-wal
+ug
