@@ -8,6 +8,7 @@ GameStore is a small ASP.NET Core minimal API for managing a video game catalog.
 - ASP.NET Core minimal APIs
 - Entity Framework Core
 - SQLite
+- Swagger / OpenAPI with Swashbuckle
 - Data annotations validation
 
 ## Project Structure
@@ -47,6 +48,18 @@ dotnet run --project GameStore/GameStore.csproj --launch-profile http
 ```
 
 Default HTTP URL: `http://localhost:5137`
+
+Swagger UI is available in Development at:
+
+```text
+http://localhost:5137/swagger
+```
+
+The OpenAPI JSON document is available at:
+
+```text
+http://localhost:5137/swagger/v1/swagger.json
+```
 
 The app uses `GameStore.db` as a local SQLite database. On startup, pending migrations are applied automatically and default genres are seeded:
 
