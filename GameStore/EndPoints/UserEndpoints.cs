@@ -57,7 +57,9 @@ public static class UserEndpoints
             JwtTokenService jwtTokenService) =>
         {
             string email = loginUser.Email.Trim().ToLowerInvariant();
-            User? user = await context.Users.FirstOrDefaultAsync(user => user.Email == email);
+            User? user = await context.Users
+                .Include(user => user.Role)
+                .FirstOrDefaultAsync(user => user.Email == email);
 
             if (user is null || !passwordService.VerifyPassword(loginUser.Password, user.PasswordHash))
             {
