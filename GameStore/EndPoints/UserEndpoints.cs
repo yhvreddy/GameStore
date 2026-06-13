@@ -14,6 +14,15 @@ public static class UserEndpoints
     {
         var usersGroup = app.MapGroup("/users").WithTags("Users");
 
+        usersGroup.MapGet("/", async (GameStoreContext context) =>
+        {
+            var users = await context.Users
+                .Select(user => new UserDto(user.Id, user.FullName, user.Email, user.RoleId))
+                .ToListAsync();
+
+            return Results.Ok(users);
+        }).RequireAuthorization(new AuthorizeAttribute { Roles = "Admin" });
+
         usersGroup.MapPost("/register", async (
             RegisterUserDto registerUser,
             GameStoreContext context,
