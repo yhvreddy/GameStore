@@ -67,6 +67,8 @@ app.MapUserEndpoints();
 app.MapGameStoreEndpoints();
 app.MapGenreEndpoints();
 app.MapRoleEndpoints();
+app.MapCartEndpoints();
+app.MapOrderEndpoints();
 app.MigrationDb();
 
 app.Run();

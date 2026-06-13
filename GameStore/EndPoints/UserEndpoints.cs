@@ -80,5 +80,7 @@ public static class UserEndpoints
                 ? Results.NotFound()
                 : Results.Ok(new UserDto(user.Id, user.FullName, user.Email, user.RoleId));
         });
+
+        usersGroup.MapPost("/logout", [Authorize] () => Results.NoContent());
     }
 }

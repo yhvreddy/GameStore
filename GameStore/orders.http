@@ -1,0 +1,45 @@
+@GameStore_HostAddress = http://localhost:5137
+@token = paste-login-token-here
+
+### View cart
+GET {{GameStore_HostAddress}}/cart
+Authorization: Bearer {{token}}
+
+### Add game to cart
+POST {{GameStore_HostAddress}}/cart/items
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "gameId": 1,
+  "quantity": 2
+}
+
+### Update cart item quantity
+PUT {{GameStore_HostAddress}}/cart/items/1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "quantity": 1
+}
+
+### Remove cart item
+DELETE {{GameStore_HostAddress}}/cart/items/1
+Authorization: Bearer {{token}}
+
+### Clear cart
+DELETE {{GameStore_HostAddress}}/cart
+Authorization: Bearer {{token}}
+
+### Checkout
+POST {{GameStore_HostAddress}}/checkout
+Authorization: Bearer {{token}}
+
+### My orders
+GET {{GameStore_HostAddress}}/orders/my
+Authorization: Bearer {{token}}
+
+### My order details
+GET {{GameStore_HostAddress}}/orders/my/1
+Authorization: Bearer {{token}}
