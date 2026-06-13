@@ -65,7 +65,8 @@ app.UseAuthorization();
 
 app.MapUserEndpoints();
 app.MapGameStoreEndpoints();
-app.MapGenreEPEndpoints();
+app.MapGenreEndpoints();
+app.MapRoleEndpoints();
 app.MigrationDb();
 
 app.Run();

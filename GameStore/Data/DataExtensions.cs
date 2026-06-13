@@ -1,4 +1,4 @@
-using GameStore.Models;
+using GameStore.Data.Seeders;
 using Microsoft.EntityFrameworkCore;
 
 namespace GameStore.Data;
@@ -17,21 +17,8 @@ public static class DataExtensions
     {
         var connectionString = builder.Configuration.GetConnectionString("GameStore");
 
-        
-
-        builder.Services.AddSqlite<GameStoreContext>(connectionString, optionsAction: options => options.UseSeeding((context, _) =>
-        {
-            if(!context.Set<Genre>().Any())
-            {
-                context.Set<Genre>().AddRange(
-                    new Genre { Name = "Action" },
-                    new Genre { Name = "Adventure" },
-                    new Genre { Name = "RPG" },
-                    new Genre { Name = "Strategy" },
-                    new Genre { Name = "Sports" }
-                );
-                context.SaveChanges();
-            }
-        }));
+        builder.Services.AddSqlite<GameStoreContext>(
+            connectionString,
+            optionsAction: options => options.UseSeeding((context, _) => DatabaseSeeder.Seed(context)));
     }
 }

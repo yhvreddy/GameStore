@@ -35,6 +35,6 @@ public class JwtTokenService(IConfiguration configuration)
             signingCredentials: credentials);
 
         string tokenValue = new JwtSecurityTokenHandler().WriteToken(token);
-        return new AuthResponseDto(tokenValue, expiresAt, new UserDto(user.Id, user.FullName, user.Email));
+        return new AuthResponseDto(tokenValue, expiresAt, new UserDto(user.Id, user.FullName, user.Email, user.RoleId));
     }
 }

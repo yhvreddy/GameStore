@@ -5,9 +5,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GameStore.EndPoints;
 
-public static class GenreEP
+public static class GenreEndPoint
 {
-    public static void MapGenreEPEndpoints(this WebApplication app)
+    public static void MapGenreEndpoints(this WebApplication app)
     {
         // Map the genre endpoints
         var genresGroup = app.MapGroup("/genres").WithTags("Genres").RequireAuthorization();

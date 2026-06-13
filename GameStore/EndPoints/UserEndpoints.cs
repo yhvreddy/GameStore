@@ -31,13 +31,14 @@ public static class UserEndpoints
             {
                 FullName = registerUser.FullName.Trim(),
                 Email = email,
-                PasswordHash = passwordService.HashPassword(registerUser.Password)
+                PasswordHash = passwordService.HashPassword(registerUser.Password),
+                RoleId = registerUser.RoleId
             };
 
             context.Users.Add(user);
             await context.SaveChangesAsync();
 
-            return Results.Created($"/users/{user.Id}", new UserDto(user.Id, user.FullName, user.Email));
+            return Results.Created($"/users/{user.Id}", new UserDto(user.Id, user.FullName, user.Email, user.RoleId));
         }).AllowAnonymous();
 
         usersGroup.MapPost("/login", async (
@@ -68,7 +69,7 @@ public static class UserEndpoints
             User? user = await context.Users.FindAsync(userId);
             return user is null
                 ? Results.NotFound()
-                : Results.Ok(new UserDto(user.Id, user.FullName, user.Email));
+                : Results.Ok(new UserDto(user.Id, user.FullName, user.Email, user.RoleId));
         });
     }
 }
