@@ -17,4 +17,7 @@ obj/
 *.db
 *.db-shm
 *.db-wal
-ug
+
+# Local environment files
+.env
+!.env.example

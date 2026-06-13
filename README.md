@@ -63,6 +63,187 @@ Swagger UI:
 http://localhost:5137/swagger
 ```
 
+## Docker Deployment
+
+The repository includes a Docker setup for local deployment and server deployment. Use this when you want to run the API without installing/running the app directly with `dotnet run`.
+
+Files:
+
+- `Dockerfile` builds and publishes the ASP.NET Core API.
+- `docker-compose.yml` runs the API on port `5137`.
+- `.env.example` shows the required environment variables.
+- `.dockerignore` keeps build output, local DB files, and editor files out of the Docker build context.
+
+### Prerequisites
+
+- Docker Desktop installed.
+- Docker Desktop running with the Linux engine enabled.
+- Run Docker commands from the repository root:
+
+```powershell
+cd D:\.Net\GameStore
+```
+
+### First-Time Setup
+
+Create your local environment file from the template:
+
+```powershell
+copy .env.example .env
+```
+
+Update `.env` with a strong JWT secret. Keep this file private and do not commit it:
+
+```text
+JWT_SECRET_KEY=your-very-long-random-secret-key-here
+```
+
+The compose file will fail to start if `JWT_SECRET_KEY` is missing.
+
+### Build And Start
+
+```powershell
+docker compose up --build -d
+```
+
+This command:
+
+- Builds the Docker image from `Dockerfile`.
+- Starts the `gamestore-api` container.
+- Maps host port `5137` to container port `8080`.
+- Stores SQLite data in the `gamestore-data` Docker volume.
+
+### Verify The Container
+
+```text
+http://localhost:5137/health
+```
+
+```powershell
+curl http://localhost:5137/health
+```
+
+Expected response:
+
+```json
+{
+  "status": "Healthy"
+}
+```
+
+### Swagger In Docker
+
+By default, Docker runs the app with:
+
+```yaml
+ASPNETCORE_ENVIRONMENT: Production
+```
+
+Swagger is enabled only in `Development`. For local Docker testing, temporarily change this value in `docker-compose.yml`:
+
+```yaml
+ASPNETCORE_ENVIRONMENT: Development
+```
+
+Then rebuild and start again:
+
+```powershell
+docker compose up --build -d
+```
+
+Open Swagger:
+
+```text
+http://localhost:5137/swagger
+```
+
+For server deployment, keep `ASPNETCORE_ENVIRONMENT` as `Production`.
+
+### Logs
+
+```powershell
+docker compose logs -f gamestore-api
+```
+
+### Stop
+
+```powershell
+docker compose down
+```
+
+### Rebuild After Code Changes
+
+```powershell
+docker compose up --build -d
+```
+
+### Reset The Docker Database
+
+The container uses a named Docker volume:
+
+```text
+gamestore-data
+```
+
+Inside the container, SQLite is stored here:
+
+```text
+/app/data/GameStore.db
+```
+
+To stop the app and delete this database volume:
+
+```powershell
+docker compose down -v
+```
+
+The next `docker compose up --build -d` will create a fresh database, apply migrations, and run seeders again.
+
+### Useful Docker Commands
+
+```powershell
+docker compose ps
+docker compose logs gamestore-api
+docker compose restart gamestore-api
+docker compose down
+```
+
+### Production Notes
+
+- Keep `.env` out of Git.
+- Use a long random `JWT_SECRET_KEY`.
+- Put the app behind HTTPS using a reverse proxy such as Nginx, Caddy, Azure App Service, or IIS.
+- For real production traffic, consider moving from SQLite to SQL Server, PostgreSQL, or another managed database.
+
+### Common Docker Issues
+
+If Docker build fails with a Docker engine error, start Docker Desktop and wait until it says the engine is running.
+
+If the app starts but JWT login fails, check that `.env` has a non-empty `JWT_SECRET_KEY`.
+
+If old data is still showing, reset the volume:
+
+```powershell
+docker compose down -v
+docker compose up --build -d
+```
+
+## CI Pipeline
+
+GitHub Actions workflow:
+
+```text
+.github/workflows/ci.yml
+```
+
+The workflow runs on pushes to `main`/`master` and on pull requests. It:
+
+- Restores NuGet packages.
+- Builds the API in Release mode.
+- Builds the Docker image as `gamestore-api:ci`.
+
+This is a validation pipeline only. To deploy to a real host, add a push step for your registry, such as Docker Hub, GitHub Container Registry, Azure Container Registry, or AWS ECR, then deploy that image to your server or cloud service.
+
 ## Database
 
 The app uses SQLite with this default connection string:

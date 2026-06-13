@@ -82,6 +82,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.MapGet("/", () => "Hello World!").ExcludeFromDescription();
+app.MapGet("/health", () => Results.Ok(new { status = "Healthy" })).ExcludeFromDescription();
 
 app.UseAuthentication();
 app.UseAuthorization();

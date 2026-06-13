@@ -1,0 +1,21 @@
+services:
+  gamestore-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gamestore-api
+    restart: unless-stopped
+    ports:
+      - "5137:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__GameStore: Data Source=/app/data/GameStore.db
+      Jwt__Issuer: ${JWT_ISSUER:-GameStore}
+      Jwt__Audience: ${JWT_AUDIENCE:-GameStoreUsers}
+      Jwt__SecretKey: ${JWT_SECRET_KEY:?Set JWT_SECRET_KEY in your .env file}
+    volumes:
+      - gamestore-data:/app/data
+
+volumes:
+  gamestore-data:
