@@ -17,6 +17,7 @@ public class JwtTokenService(IConfiguration configuration)
 
         Claim[] claims =
         [
+            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new(ClaimTypes.Name, user.FullName),

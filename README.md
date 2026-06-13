@@ -32,7 +32,7 @@ GameStore/
 
 ## Main Features
 
-- User registration, login, logout endpoint, and current-user profile.
+- User registration, login, token-revoking logout, and current-user profile.
 - JWT-protected endpoints with Swagger Authorize support.
 - Role table with seeded `Admin` and `Customer` roles.
 - Public game and genre browsing.
@@ -122,7 +122,7 @@ In Swagger:
 3. Click `Authorize`.
 4. Paste the token only, without typing `Bearer`.
 
-The JWT includes user id, name, email, and role claims.
+The JWT includes user id, name, email, role, and token ID claims. Logout stores the token ID in `RevokedTokens`, so the same token is rejected on future requests.
 
 ## Endpoint Summary
 
@@ -134,7 +134,7 @@ Users:
 | POST | `/users/register` | Public | Register user |
 | POST | `/users/login` | Public | Login and receive token |
 | GET | `/users/me` | User | Get current user |
-| POST | `/users/logout` | User | Client-side logout helper |
+| POST | `/users/logout` | User | Revoke current JWT |
 
 Roles:
 
@@ -230,12 +230,12 @@ Completed audit updates:
 - Hardcoded JWT removed from `users.http`.
 - Protected write examples now include `Authorization: Bearer {{token}}`.
 - JWT generation now includes the user's role claim, so role-based authorization can work.
+- Logout now revokes the current JWT server-side through the `RevokedTokens` table.
 
 Current risks and next improvements:
 
 - Public registration currently accepts `roleId`, so a caller can choose a role. In a production ecommerce app, registration should always create a `Customer`, and only an Admin should manage roles.
 - Role, game, and genre write endpoints currently require any authenticated user. A production app should usually restrict these to Admin.
-- Logout is stateless because JWTs are client-held. The endpoint returns success, but the client must delete its token.
 - `Jwt:SecretKey` is a local development value and should move to user secrets or environment variables for real deployments.
 - There is no automated test project yet.
 

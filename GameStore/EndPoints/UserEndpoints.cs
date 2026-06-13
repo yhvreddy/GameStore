@@ -1,3 +1,4 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using GameStore.Data;
 using GameStore.Dtos;
@@ -83,6 +84,30 @@ public static class UserEndpoints
                 : Results.Ok(new UserDto(user.Id, user.FullName, user.Email, user.RoleId));
         });
 
-        usersGroup.MapPost("/logout", [Authorize] () => Results.NoContent());
+        usersGroup.MapPost("/logout", [Authorize] async (ClaimsPrincipal claimsPrincipal, GameStoreContext context) =>
+        {
+            string? jwtId = claimsPrincipal.FindFirstValue(JwtRegisteredClaimNames.Jti);
+            string? expiresAtValue = claimsPrincipal.FindFirstValue(JwtRegisteredClaimNames.Exp);
+
+            if (string.IsNullOrWhiteSpace(jwtId) ||
+                !long.TryParse(expiresAtValue, out long expiresAtUnixSeconds))
+            {
+                return Results.Unauthorized();
+            }
+
+            bool alreadyRevoked = await context.RevokedTokens.AnyAsync(token => token.JwtId == jwtId);
+            if (!alreadyRevoked)
+            {
+                context.RevokedTokens.Add(new RevokedToken
+                {
+                    JwtId = jwtId,
+                    ExpiresAt = DateTimeOffset.FromUnixTimeSeconds(expiresAtUnixSeconds).UtcDateTime
+                });
+
+                await context.SaveChangesAsync();
+            }
+
+            return Results.NoContent();
+        });
     }
 }

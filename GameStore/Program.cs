@@ -3,8 +3,11 @@ using GameStore.EndPoints;
 using GameStore.Services;
 using GameStore.Swagger;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -42,6 +45,26 @@ builder.Services
             ValidAudience = builder.Configuration["Jwt:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(builder.Configuration["Jwt:SecretKey"]!))
+        };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = async context =>
+            {
+                string? jwtId = context.Principal?.FindFirstValue(JwtRegisteredClaimNames.Jti);
+                if (string.IsNullOrWhiteSpace(jwtId))
+                {
+                    context.Fail("Token is missing a JWT ID.");
+                    return;
+                }
+
+                var dbContext = context.HttpContext.RequestServices.GetRequiredService<GameStoreContext>();
+                bool tokenRevoked = await dbContext.RevokedTokens.AnyAsync(token => token.JwtId == jwtId);
+                if (tokenRevoked)
+                {
+                    context.Fail("Token has been logged out.");
+                }
+            }
         };
     });
 

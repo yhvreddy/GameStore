@@ -13,11 +13,16 @@ public class GameStoreContext(DbContextOptions<GameStoreContext> options) : DbCo
     public DbSet<CartItem> CartItems => Set<CartItem>();
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
+    public DbSet<RevokedToken> RevokedTokens => Set<RevokedToken>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<User>()
             .HasIndex(user => user.Email)
+            .IsUnique();
+
+        modelBuilder.Entity<RevokedToken>()
+            .HasIndex(revokedToken => revokedToken.JwtId)
             .IsUnique();
 
         modelBuilder.Entity<CartItem>()
