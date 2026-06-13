@@ -1,0 +1,29 @@
+@GameStore_HostAddress = http://localhost:5137
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvbmFtZWlkZW50aWZpZXIiOiIyIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvbmFtZSI6IkhhcnNoYSBZZW51bXVsYSIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL2VtYWlsYWRkcmVzcyI6ImdhbWVzdG9yZUBnbWFpbC5jb20iLCJleHAiOjE3ODEzNDEwNzksImlzcyI6IkdhbWVTdG9yZSIsImF1ZCI6IkdhbWVTdG9yZVVzZXJzIn0.-WlRAm0SF9B70UfbvPJCU1YFeG2zLlssv0ud9KOc8sc
+
+### Register a new user
+POST {{GameStore_HostAddress}}/users/register
+Content-Type: application/json
+
+{
+  "fullName": "Demo User",
+  "email": "demo@example.com",
+  "password": "password123"
+}
+
+### Login and copy the token value from the response
+POST {{GameStore_HostAddress}}/users/login
+Content-Type: application/json
+
+{
+  "email": "demo@example.com",
+  "password": "password123"
+}
+
+### Get current logged-in user
+GET {{GameStore_HostAddress}}/users/me
+Authorization: Bearer {{token}}
+
+### Protected example: get games
+GET {{GameStore_HostAddress}}/games
+Authorization: Bearer {{token}}

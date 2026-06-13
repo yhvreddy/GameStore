@@ -14,7 +14,7 @@ public static class GameStore
     {
         // Map the game store endpoints
 
-        var gamesGroup = app.MapGroup("/games").WithTags("Game Store");
+        var gamesGroup = app.MapGroup("/games").WithTags("Game Store").RequireAuthorization();
 
         // Endpoint to get all games
         // GET /games
@@ -28,7 +28,7 @@ public static class GameStore
             game.ReleaseDate
         ))
         .AsNoTracking()
-        .ToListAsync()).WithName("GetAllGames");
+        .ToListAsync()).WithName("GetAllGames").AllowAnonymous();
 
         // Endpoint to get a game by ID
         // GET /games/{id}
@@ -44,7 +44,7 @@ public static class GameStore
                     game.ReleaseDate
                 )
             );
-        }).WithName(GetGameByIdEndpointName);
+        }).WithName(GetGameByIdEndpointName).AllowAnonymous();
 
         // Endpoint to add a new game
         // POST /games

@@ -1,21 +1,23 @@
-GET http://localhost:5137/games
+@GameStore_HostAddress = http://localhost:5137
+
+GET {{GameStore_HostAddress}}/games
 
 ###
-GET http://localhost:5137/games/2
+GET {{GameStore_HostAddress}}/games/2
 
 ###
-POST http://localhost:5137/games
+POST {{GameStore_HostAddress}}/games
 Content-Type: application/json
 
 {
-  "name": "Game of Thrones: The Role-Playing Game",
+  "name": "Sonic Race",
   "genreId": 1,
-  "price": 85.10,
-  "releaseDate": "2020-12-10"
+  "price": 15.10,
+  "releaseDate": "2021-11-15"
 }
 
 ###
-PUT http://localhost:5137/games/6
+PUT {{GameStore_HostAddress}}/games/6
 Content-Type: application/json
 
 {
@@ -26,16 +28,16 @@ Content-Type: application/json
 }
 
 ###
-DELETE http://localhost:5137/games/1
+DELETE {{GameStore_HostAddress}}/games/1
 
 ###
-GET http://localhost:5137/genres
+GET {{GameStore_HostAddress}}/genres
 
 ###
-GET http://localhost:5137/genres/1
+GET {{GameStore_HostAddress}}/genres/1
 
 ###
-POST http://localhost:5137/genres
+POST {{GameStore_HostAddress}}/genres
 Content-Type: application/json
 
 {
@@ -43,7 +45,7 @@ Content-Type: application/json
 }
 
 ###
-PUT http://localhost:5137/genres/6
+PUT {{GameStore_HostAddress}}/genres/6
 Content-Type: application/json
 
 {
@@ -51,4 +53,4 @@ Content-Type: application/json
 }
 
 ###
-DELETE http://localhost:5137/genres/6
+DELETE {{GameStore_HostAddress}}/genres/6

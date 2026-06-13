@@ -10,7 +10,7 @@ public static class GenreEP
     public static void MapGenreEPEndpoints(this WebApplication app)
     {
         // Map the genre endpoints
-        var genresGroup = app.MapGroup("/genres").WithTags("Genres");
+        var genresGroup = app.MapGroup("/genres").WithTags("Genres").RequireAuthorization();
 
         // Endpoint to get all genres
         // GET /genres
@@ -20,7 +20,7 @@ public static class GenreEP
             genre.Name
         ))
         .AsNoTracking()
-        .ToListAsync()).WithName("GetAllGenres");
+        .ToListAsync()).WithName("GetAllGenres").AllowAnonymous();
 
         // Endpoint to get a genre by ID
         // GET /genres/{id}
@@ -36,7 +36,7 @@ public static class GenreEP
                 .FirstOrDefaultAsync();
 
             return genre is not null ? Results.Ok(genre) : Results.NotFound();
-        }).WithName("GetGenreById");
+        }).WithName("GetGenreById").AllowAnonymous();
 
         // Endpoint to create a new genre
         // POST /genres
