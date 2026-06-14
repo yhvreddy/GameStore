@@ -376,6 +376,7 @@ Logs:
 
 | Method | Route | Auth | Description |
 | --- | --- | --- | --- |
+| GET | `/logs` | Public | List application log entries |
 | POST | `/logs` | Public | Create an application log entry |
 
 ## Request Samples

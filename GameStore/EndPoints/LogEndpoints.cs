@@ -1,6 +1,8 @@
 using GameStore.Dtos;
+using GameStore.Data;
 using GameStore.Models;
 using GameStore.Services;
+using Microsoft.EntityFrameworkCore;
 
 namespace GameStore.EndPoints;
 
@@ -11,6 +13,26 @@ public static class LogEndpoints
         var logsGroup = app.MapGroup("/logs")
             .WithTags("Logs")
             .AllowAnonymous();
+
+        logsGroup.MapGet("/", async (GameStoreContext context) =>
+        {
+            List<LogDto> logs = await context.Logs
+                .OrderByDescending(log => log.CreatedAt)
+                .Select(log => new LogDto(
+                    log.Id,
+                    log.Level,
+                    log.Message,
+                    log.Source,
+                    log.UserId,
+                    log.Exception,
+                    log.CreatedAt))
+                .AsNoTracking()
+                .ToListAsync();
+
+            return Results.Ok(logs);
+        })
+        .WithName("GetLogs")
+        .Produces<List<LogDto>>(StatusCodes.Status200OK);
 
         logsGroup.MapPost("/", async (CreateLogDto createLog, ILogService logService) =>
         {
