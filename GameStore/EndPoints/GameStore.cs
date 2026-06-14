@@ -1,6 +1,7 @@
 using GameStore.Data;
 using GameStore.Dtos;
 using GameStore.Models;
+using GameStore.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace GameStore.EndPoints;
@@ -48,7 +49,7 @@ public static class GameStore
 
         // Endpoint to add a new game
         // POST /games
-        gamesGroup.MapPost("/", async (CreateGameDto newGame, GameStoreContext context) =>
+        gamesGroup.MapPost("/", async (CreateGameDto newGame, GameStoreContext context, ILogService logService) =>
         {
 
             Game game = new()
@@ -60,6 +61,7 @@ public static class GameStore
             };
             context.Games.Add(game);
             await context.SaveChangesAsync();
+            await logService.LogAsync("Information", $"Game created: {game.Name}.", "Games.Create");
 
             GameDetailsDto gameDto = new(
                 game.Id,
@@ -74,7 +76,7 @@ public static class GameStore
 
         // Endpoint to update an existing game
         // PUT /games/{id}
-        gamesGroup.MapPut("/{id}", async (int id, UpdateGameDto updatedGame, GameStoreContext context) =>
+        gamesGroup.MapPut("/{id}", async (int id, UpdateGameDto updatedGame, GameStoreContext context, ILogService logService) =>
         {
             var game = await context.Games.FindAsync(id);
             if (game is null)
@@ -88,12 +90,13 @@ public static class GameStore
             game.ReleaseDate = updatedGame.ReleaseDate;
 
             await context.SaveChangesAsync();
+            await logService.LogAsync("Information", $"Game updated: {game.Name}.", "Games.Update");
             return Results.NoContent();
         });
 
         // Endpoint to delete a game
         // DELETE /games/{id}
-        gamesGroup.MapDelete("/{id}", async (int id, GameStoreContext context) =>
+        gamesGroup.MapDelete("/{id}", async (int id, GameStoreContext context, ILogService logService) =>
         {
             var game = await context.Games.FindAsync(id);
             if (game is null)
@@ -101,6 +104,7 @@ public static class GameStore
                 return Results.NotFound();
             }
             await context.Games.Where(g => g.Id == id).ExecuteDeleteAsync();
+            await logService.LogAsync("Information", $"Game deleted: {game.Name}.", "Games.Delete");
             return Results.NoContent();
         });
     }

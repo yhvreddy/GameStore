@@ -1,6 +1,7 @@
 using GameStore.Data;
 using GameStore.Dtos;
 using GameStore.Models;
+using GameStore.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace GameStore.EndPoints;
@@ -42,7 +43,7 @@ public static class RoleEndPoint
 
         // Endpoint to create a new role
         // POST /roles
-        rolesGroup.MapPost("/", async (RoleCreateDto roleDto, GameStoreContext context) =>
+        rolesGroup.MapPost("/", async (RoleCreateDto roleDto, GameStoreContext context, ILogService logService) =>
         {
             var role = new Role
             {
@@ -52,6 +53,7 @@ public static class RoleEndPoint
 
             context.Roles.Add(role);
             await context.SaveChangesAsync();
+            await logService.LogAsync("Information", $"Role created: {role.Name}.", "Roles.Create");
 
             return Results.Created($"/roles/{role.Id}", new RoleDto(role.Id, role.Name, role.Slug));
         }).WithName("CreateRole");
@@ -59,7 +61,7 @@ public static class RoleEndPoint
 
         // Endpoint to update an existing role
         // PUT /roles/{id}
-        rolesGroup.MapPut("/{id:int}", async (int id, RoleCreateDto roleDto, GameStoreContext context) =>
+        rolesGroup.MapPut("/{id:int}", async (int id, RoleCreateDto roleDto, GameStoreContext context, ILogService logService) =>
         {
             var role = await context.Roles.FindAsync(id);
             if (role is null)
@@ -70,13 +72,14 @@ public static class RoleEndPoint
             role.Name = roleDto.Name;
             role.Slug = roleDto.Slug;
             await context.SaveChangesAsync();
+            await logService.LogAsync("Information", $"Role updated: {role.Name}.", "Roles.Update");
 
             return Results.NoContent();
         }).WithName("UpdateRole");
 
         // Endpoint to delete a role
         // DELETE /roles/{id}
-        rolesGroup.MapDelete("/{id:int}", async (int id, GameStoreContext context) =>
+        rolesGroup.MapDelete("/{id:int}", async (int id, GameStoreContext context, ILogService logService) =>
         {
             var role = await context.Roles.FindAsync(id);
             if (role is null)
@@ -85,6 +88,7 @@ public static class RoleEndPoint
             }
 
             await context.Roles.Where(r => r.Id == id).ExecuteDeleteAsync();
+            await logService.LogAsync("Information", $"Role deleted: {role.Name}.", "Roles.Delete");
 
             return Results.NoContent();
         }).WithName("DeleteRole");

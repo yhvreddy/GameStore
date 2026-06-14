@@ -1,6 +1,7 @@
 using GameStore.Data;
 using GameStore.Dtos;
 using GameStore.Models;
+using GameStore.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace GameStore.EndPoints;
@@ -40,7 +41,7 @@ public static class GenreEndPoint
 
         // Endpoint to create a new genre
         // POST /genres
-        genresGroup.MapPost("/", async (GenreCreateDto genreDto, GameStoreContext context) =>
+        genresGroup.MapPost("/", async (GenreCreateDto genreDto, GameStoreContext context, ILogService logService) =>
         {
             var genre = new Genre
             {
@@ -49,6 +50,7 @@ public static class GenreEndPoint
 
             context.Genres.Add(genre);
             await context.SaveChangesAsync();
+            await logService.LogAsync("Information", $"Genre created: {genre.Name}.", "Genres.Create");
 
             return Results.Created($"/genres/{genre.Id}", new GenreDto(genre.Id, genre.Name));
         }).WithName("CreateGenre");
@@ -56,7 +58,7 @@ public static class GenreEndPoint
 
         // Endpoint to update an existing genre
         // PUT /genres/{id}
-        genresGroup.MapPut("/{id:int}", async (int id, GenreCreateDto genreDto, GameStoreContext context) =>
+        genresGroup.MapPut("/{id:int}", async (int id, GenreCreateDto genreDto, GameStoreContext context, ILogService logService) =>
         {
             var genre = await context.Genres.FindAsync(id);
             if (genre is null)
@@ -66,13 +68,14 @@ public static class GenreEndPoint
 
             genre.Name = genreDto.Name;
             await context.SaveChangesAsync();
+            await logService.LogAsync("Information", $"Genre updated: {genre.Name}.", "Genres.Update");
 
             return Results.NoContent();
         }).WithName("UpdateGenre");
 
         // Endpoint to delete a genre
         // DELETE /genres/{id}
-        genresGroup.MapDelete("/{id:int}", async (int id, GameStoreContext context) =>
+        genresGroup.MapDelete("/{id:int}", async (int id, GameStoreContext context, ILogService logService) =>
         {
             var genre = await context.Genres.FindAsync(id);
             if (genre is null)
@@ -81,6 +84,7 @@ public static class GenreEndPoint
             }
 
             await context.Genres.Where(g => g.Id == id).ExecuteDeleteAsync();
+            await logService.LogAsync("Information", $"Genre deleted: {genre.Name}.", "Genres.Delete");
 
             return Results.NoContent();
         }).WithName("DeleteGenre");

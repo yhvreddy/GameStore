@@ -27,7 +27,8 @@ public static class UserEndpoints
         usersGroup.MapPost("/register", async (
             RegisterUserDto registerUser,
             GameStoreContext context,
-            PasswordService passwordService) =>
+            PasswordService passwordService,
+            ILogService logService) =>
         {
             string email = registerUser.Email.Trim().ToLowerInvariant();
             bool emailExists = await context.Users.AnyAsync(user => user.Email == email);
@@ -47,6 +48,7 @@ public static class UserEndpoints
 
             context.Users.Add(user);
             await context.SaveChangesAsync();
+            await logService.LogAsync("Information", "User registered.", "Users.Register", user.Id);
 
             return Results.Created($"/users/{user.Id}", new UserDto(user.Id, user.FullName, user.Email, user.RoleId));
         }).AllowAnonymous();
@@ -55,7 +57,8 @@ public static class UserEndpoints
             LoginUserDto loginUser,
             GameStoreContext context,
             PasswordService passwordService,
-            JwtTokenService jwtTokenService) =>
+            JwtTokenService jwtTokenService,
+            ILogService logService) =>
         {
             string email = loginUser.Email.Trim().ToLowerInvariant();
             User? user = await context.Users
@@ -64,9 +67,11 @@ public static class UserEndpoints
 
             if (user is null || !passwordService.VerifyPassword(loginUser.Password, user.PasswordHash))
             {
+                await logService.LogAsync("Warning", $"Failed login attempt for {email}.", "Users.Login");
                 return Results.Unauthorized();
             }
 
+            await logService.LogAsync("Information", "User logged in.", "Users.Login", user.Id);
             return Results.Ok(jwtTokenService.CreateToken(user));
         }).AllowAnonymous();
 
@@ -84,8 +89,12 @@ public static class UserEndpoints
                 : Results.Ok(new UserDto(user.Id, user.FullName, user.Email, user.RoleId));
         });
 
-        usersGroup.MapPost("/logout", [Authorize] async (ClaimsPrincipal claimsPrincipal, GameStoreContext context) =>
+        usersGroup.MapPost("/logout", [Authorize] async (
+            ClaimsPrincipal claimsPrincipal,
+            GameStoreContext context,
+            ILogService logService) =>
         {
+            string? userIdValue = claimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier);
             string? jwtId = claimsPrincipal.FindFirstValue(JwtRegisteredClaimNames.Jti);
             string? expiresAtValue = claimsPrincipal.FindFirstValue(JwtRegisteredClaimNames.Exp);
 
@@ -106,6 +115,9 @@ public static class UserEndpoints
 
                 await context.SaveChangesAsync();
             }
+
+            int.TryParse(userIdValue, out int userId);
+            await logService.LogAsync("Information", "User logged out.", "Users.Logout", userId == 0 ? null : userId);
 
             return Results.NoContent();
         });

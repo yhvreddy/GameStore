@@ -2,6 +2,7 @@ using System.Security.Claims;
 using GameStore.Data;
 using GameStore.Dtos;
 using GameStore.Models;
+using GameStore.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,7 +12,10 @@ public static class OrderEndpoints
 {
     public static void MapOrderEndpoints(this WebApplication app)
     {
-        app.MapPost("/checkout", [Authorize] async (ClaimsPrincipal claimsPrincipal, GameStoreContext context) =>
+        app.MapPost("/checkout", [Authorize] async (
+            ClaimsPrincipal claimsPrincipal,
+            GameStoreContext context,
+            ILogService logService) =>
         {
             if (!TryGetUserId(claimsPrincipal, out int userId))
             {
@@ -47,6 +51,11 @@ public static class OrderEndpoints
             context.Orders.Add(order);
             context.CartItems.RemoveRange(cartItems);
             await context.SaveChangesAsync();
+            await logService.LogAsync(
+                "Information",
+                $"Checkout completed for order ID {order.Id}.",
+                "Orders.Checkout",
+                userId);
             await transaction.CommitAsync();
 
             return Results.Created($"/orders/my/{order.Id}", ToOrderDto(order));

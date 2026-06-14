@@ -30,6 +30,7 @@ builder.Services.AddSwaggerGen(options =>
 
 builder.Services.AddScoped<PasswordService>();
 builder.Services.AddScoped<JwtTokenService>();
+builder.Services.AddScoped<ILogService, LogService>();
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -93,6 +94,7 @@ app.MapGenreEndpoints();
 app.MapRoleEndpoints();
 app.MapCartEndpoints();
 app.MapOrderEndpoints();
+app.MapLogEndpoints();
 app.MigrationDb();
 
 app.Run();

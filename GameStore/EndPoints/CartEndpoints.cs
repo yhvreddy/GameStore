@@ -2,6 +2,7 @@ using System.Security.Claims;
 using GameStore.Data;
 using GameStore.Dtos;
 using GameStore.Models;
+using GameStore.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 
@@ -28,7 +29,8 @@ public static class CartEndpoints
         cartGroup.MapPost("/items", [Authorize] async (
             AddCartItemDto addCartItem,
             ClaimsPrincipal claimsPrincipal,
-            GameStoreContext context) =>
+            GameStoreContext context,
+            ILogService logService) =>
         {
             if (!TryGetUserId(claimsPrincipal, out int userId))
             {
@@ -65,6 +67,11 @@ public static class CartEndpoints
             }
 
             await context.SaveChangesAsync();
+            await logService.LogAsync(
+                "Information",
+                $"Cart item added or increased for game ID {addCartItem.GameId}.",
+                "Cart.AddItem",
+                userId);
 
             return Results.Ok(await GetCartDto(context, userId));
         });
@@ -73,7 +80,8 @@ public static class CartEndpoints
             int gameId,
             UpdateCartItemDto updateCartItem,
             ClaimsPrincipal claimsPrincipal,
-            GameStoreContext context) =>
+            GameStoreContext context,
+            ILogService logService) =>
         {
             if (!TryGetUserId(claimsPrincipal, out int userId))
             {
@@ -96,6 +104,11 @@ public static class CartEndpoints
             cartItem.Quantity = updateCartItem.Quantity;
             cartItem.UpdatedAt = DateTime.UtcNow;
             await context.SaveChangesAsync();
+            await logService.LogAsync(
+                "Information",
+                $"Cart item quantity updated for game ID {gameId}.",
+                "Cart.UpdateItem",
+                userId);
 
             return Results.Ok(await GetCartDto(context, userId));
         });
@@ -103,7 +116,8 @@ public static class CartEndpoints
         cartGroup.MapDelete("/items/{gameId:int}", [Authorize] async (
             int gameId,
             ClaimsPrincipal claimsPrincipal,
-            GameStoreContext context) =>
+            GameStoreContext context,
+            ILogService logService) =>
         {
             if (!TryGetUserId(claimsPrincipal, out int userId))
             {
@@ -114,10 +128,24 @@ public static class CartEndpoints
                 .Where(item => item.UserId == userId && item.GameId == gameId)
                 .ExecuteDeleteAsync();
 
-            return deletedCount == 0 ? Results.NotFound() : Results.NoContent();
+            if (deletedCount == 0)
+            {
+                return Results.NotFound();
+            }
+
+            await logService.LogAsync(
+                "Information",
+                $"Cart item removed for game ID {gameId}.",
+                "Cart.RemoveItem",
+                userId);
+
+            return Results.NoContent();
         });
 
-        cartGroup.MapDelete("/", [Authorize] async (ClaimsPrincipal claimsPrincipal, GameStoreContext context) =>
+        cartGroup.MapDelete("/", [Authorize] async (
+            ClaimsPrincipal claimsPrincipal,
+            GameStoreContext context,
+            ILogService logService) =>
         {
             if (!TryGetUserId(claimsPrincipal, out int userId))
             {
@@ -127,6 +155,7 @@ public static class CartEndpoints
             await context.CartItems
                 .Where(item => item.UserId == userId)
                 .ExecuteDeleteAsync();
+            await logService.LogAsync("Information", "Cart cleared.", "Cart.Clear", userId);
 
             return Results.NoContent();
         });

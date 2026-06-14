@@ -14,6 +14,7 @@ public class GameStoreContext(DbContextOptions<GameStoreContext> options) : DbCo
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
     public DbSet<RevokedToken> RevokedTokens => Set<RevokedToken>();
+    public DbSet<AppLog> Logs => Set<AppLog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -24,6 +25,9 @@ public class GameStoreContext(DbContextOptions<GameStoreContext> options) : DbCo
         modelBuilder.Entity<RevokedToken>()
             .HasIndex(revokedToken => revokedToken.JwtId)
             .IsUnique();
+
+        modelBuilder.Entity<AppLog>()
+            .ToTable("Logs");
 
         modelBuilder.Entity<CartItem>()
             .HasIndex(cartItem => new { cartItem.UserId, cartItem.GameId })
