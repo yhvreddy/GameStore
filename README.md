@@ -1,6 +1,6 @@
 # GameStore Ecommerce API
 
-GameStore is an ASP.NET Core minimal API for a small ecommerce-style game store. It supports public catalog browsing, JWT authentication, roles, cart management, checkout, and order history.
+GameStore is an ASP.NET Core minimal API for a small ecommerce-style game store. It supports public catalog browsing, JWT authentication, roles, cart management, checkout, order history, and database-backed application logs.
 
 ## Tech Stack
 
@@ -24,7 +24,7 @@ GameStore/
   Dtos/              Request and response records
   EndPoints/         Minimal API route mappings
   Models/            EF Core entity models
-  Services/          Password hashing and JWT token services
+  Services/          Password hashing, JWT token, and log services
   Swagger/           Swagger auth document filter
   Program.cs         Application startup and route registration
   *.http             Local API request samples
@@ -40,6 +40,9 @@ GameStore/
 - Authenticated cart add/update/remove/clear workflow.
 - Authenticated checkout that converts cart items into an order.
 - Authenticated order history for the current user.
+- Database-backed logging through `ILogService`.
+- Public logger endpoint for client or application events.
+- Write-operation logging for users, games, genres, roles, cart, and checkout.
 
 ## Getting Started
 
@@ -264,6 +267,15 @@ Seed data is organized under `GameStore/Data/Seeders/`:
 - `GenreSeeder` creates default game genres.
 - `DatabaseSeeder` runs all seeders from one place.
 
+Application logs are stored in the `Logs` table through `ILogService` and `LogService`. The current log fields are:
+
+- `Level`
+- `Message`
+- `Source`
+- `Exception`
+- `UserId`
+- `CreatedAt`
+
 Create a migration from the repository root:
 
 ```powershell
@@ -360,6 +372,12 @@ Cart and orders:
 | GET | `/orders/my` | User | List current user's orders |
 | GET | `/orders/my/{id}` | User | Get current user's order |
 
+Logs:
+
+| Method | Route | Auth | Description |
+| --- | --- | --- | --- |
+| POST | `/logs` | Public | Create an application log entry |
+
 ## Request Samples
 
 Register:
@@ -396,6 +414,21 @@ POST http://localhost:5137/checkout
 Authorization: Bearer your-token-here
 ```
 
+Create log:
+
+```http
+POST http://localhost:5137/logs
+Content-Type: application/json
+
+{
+  "level": "Information",
+  "message": "Checkout page opened",
+  "source": "Frontend",
+  "userId": null,
+  "exception": null
+}
+```
+
 More samples are available in:
 
 - `GameStore/users.http`
@@ -412,6 +445,8 @@ Completed audit updates:
 - Protected write examples now include `Authorization: Bearer {{token}}`.
 - JWT generation now includes the user's role claim, so role-based authorization can work.
 - Logout now revokes the current JWT server-side through the `RevokedTokens` table.
+- Added `Logs` table, `ILogService`, `LogService`, and a public `POST /logs` endpoint.
+- CRUD/write endpoints now save log records for user auth events, games, genres, roles, cart changes, and checkout.
 
 Current risks and next improvements:
 
