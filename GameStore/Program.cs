@@ -1,5 +1,6 @@
 using GameStore.Data;
 using GameStore.Dtos;
+using GameStore.Interfaces;
 using GameStore.Repositories;
 using GameStore.Services;
 using GameStore.Swagger;

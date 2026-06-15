@@ -1,4 +1,5 @@
 using GameStore.Data;
+using GameStore.Interfaces;
 using GameStore.Models;
 
 namespace GameStore.Services;

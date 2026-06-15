@@ -1,11 +1,13 @@
 # GameStore Ecommerce API
 
-GameStore is an ASP.NET Core minimal API for a small ecommerce-style game store. It supports public catalog browsing, JWT authentication, roles, cart management, checkout, order history, and database-backed application logs.
+GameStore is an ASP.NET Core Web API for a small ecommerce-style game store. It supports public catalog browsing, JWT authentication, role data, cart management, checkout, order history, and database-backed application logs.
+
+The project now uses an MVC-style controller structure with repository interfaces and implementations, plus one consistent API response envelope for success, validation, authentication, and application errors.
 
 ## Tech Stack
 
 - .NET 10
-- ASP.NET Core minimal APIs
+- ASP.NET Core controllers
 - Entity Framework Core
 - SQLite
 - JWT bearer authentication
@@ -16,32 +18,67 @@ GameStore is an ASP.NET Core minimal API for a small ecommerce-style game store.
 
 ```text
 GameStore/
-  Data/
-    Migrations/      EF Core migrations
-    Seeders/         Default role and genre seeders
-    GameStoreContext.cs
-    DataExtensions.cs
-  Dtos/              Request and response records
-  EndPoints/         Minimal API route mappings
+  Controllers/       HTTP endpoints and API responses
+  Data/              DbContext, migrations, seeders, database startup
+  Dtos/              Request DTOs, response DTOs, ApiResponse<T>
+  Extensions/        Shared framework/helper extensions
+  Interfaces/        Repository and service contracts
+  Mapping/           Entity-to-DTO mapping extensions
   Models/            EF Core entity models
-  Services/          Password hashing, JWT token, and log services
+  Repositories/      EF Core data access implementations
+  Services/          Password hashing, JWT token creation, logging implementation
   Swagger/           Swagger auth document filter
-  Program.cs         Application startup and route registration
+  Program.cs         Application startup and middleware registration
   *.http             Local API request samples
 ```
+
+## API Response Format
+
+All application responses use `ApiResponse<T>`:
+
+```json
+{
+  "success": true,
+  "message": "Request completed successfully.",
+  "data": {},
+  "errors": [],
+  "timestamp": "2026-06-15T00:00:00Z"
+}
+```
+
+Failure responses use the same shape:
+
+```json
+{
+  "success": false,
+  "message": "Validation failed.",
+  "data": null,
+  "errors": [
+    "The Name field is required."
+  ],
+  "timestamp": "2026-06-15T00:00:00Z"
+}
+```
+
+Notes:
+
+- `data` contains the actual DTO for successful requests.
+- `errors` contains validation or failure details.
+- Delete and logout endpoints return `200 OK` with `data: null`, rather than `204 NoContent`, so the response format stays consistent.
+- JWT `401 Unauthorized` and `403 Forbidden` middleware responses are also wrapped.
 
 ## Main Features
 
 - User registration, login, token-revoking logout, and current-user profile.
 - JWT-protected endpoints with Swagger Authorize support.
 - Role table with seeded `Admin` and `Customer` roles.
-- Public game and genre browsing.
+- Public game, genre, and role browsing.
 - Authenticated game, genre, and role management.
 - Authenticated cart add/update/remove/clear workflow.
 - Authenticated checkout that converts cart items into an order.
 - Authenticated order history for the current user.
-- Database-backed logging through `ILogService`.
-- Public logger endpoint for client or application events.
+- Database-backed logging through `ILogService` and `LogService`.
+- Public log endpoint for client or application events.
 - Write-operation logging for users, games, genres, roles, cart, and checkout.
 
 ## Getting Started
@@ -60,192 +97,31 @@ Default HTTP URL:
 http://localhost:5137
 ```
 
-Swagger UI:
+Swagger UI in Development:
 
 ```text
 http://localhost:5137/swagger
 ```
 
-## Docker Deployment
-
-The repository includes a Docker setup for local deployment and server deployment. Use this when you want to run the API without installing/running the app directly with `dotnet run`.
-
-Files:
-
-- `Dockerfile` builds and publishes the ASP.NET Core API.
-- `docker-compose.yml` runs the API on port `5137`.
-- `.env.example` shows the required environment variables.
-- `.dockerignore` keeps build output, local DB files, and editor files out of the Docker build context.
-
-### Prerequisites
-
-- Docker Desktop installed.
-- Docker Desktop running with the Linux engine enabled.
-- Run Docker commands from the repository root:
-
-```powershell
-cd D:\.Net\GameStore
-```
-
-### First-Time Setup
-
-Create your local environment file from the template:
-
-```powershell
-copy .env.example .env
-```
-
-Update `.env` with a strong JWT secret. Keep this file private and do not commit it:
-
-```text
-JWT_SECRET_KEY=your-very-long-random-secret-key-here
-```
-
-The compose file will fail to start if `JWT_SECRET_KEY` is missing.
-
-### Build And Start
-
-```powershell
-docker compose up --build -d
-```
-
-This command:
-
-- Builds the Docker image from `Dockerfile`.
-- Starts the `gamestore-api` container.
-- Maps host port `5137` to container port `8080`.
-- Stores SQLite data in the `gamestore-data` Docker volume.
-
-### Verify The Container
+Health check:
 
 ```text
 http://localhost:5137/health
-```
-
-```powershell
-curl http://localhost:5137/health
 ```
 
 Expected response:
 
 ```json
 {
-  "status": "Healthy"
+  "success": true,
+  "message": "Health check completed.",
+  "data": {
+    "status": "Healthy"
+  },
+  "errors": [],
+  "timestamp": "2026-06-15T00:00:00Z"
 }
 ```
-
-### Swagger In Docker
-
-By default, Docker runs the app with:
-
-```yaml
-ASPNETCORE_ENVIRONMENT: Production
-```
-
-Swagger is enabled only in `Development`. For local Docker testing, temporarily change this value in `docker-compose.yml`:
-
-```yaml
-ASPNETCORE_ENVIRONMENT: Development
-```
-
-Then rebuild and start again:
-
-```powershell
-docker compose up --build -d
-```
-
-Open Swagger:
-
-```text
-http://localhost:5137/swagger
-```
-
-For server deployment, keep `ASPNETCORE_ENVIRONMENT` as `Production`.
-
-### Logs
-
-```powershell
-docker compose logs -f gamestore-api
-```
-
-### Stop
-
-```powershell
-docker compose down
-```
-
-### Rebuild After Code Changes
-
-```powershell
-docker compose up --build -d
-```
-
-### Reset The Docker Database
-
-The container uses a named Docker volume:
-
-```text
-gamestore-data
-```
-
-Inside the container, SQLite is stored here:
-
-```text
-/app/data/GameStore.db
-```
-
-To stop the app and delete this database volume:
-
-```powershell
-docker compose down -v
-```
-
-The next `docker compose up --build -d` will create a fresh database, apply migrations, and run seeders again.
-
-### Useful Docker Commands
-
-```powershell
-docker compose ps
-docker compose logs gamestore-api
-docker compose restart gamestore-api
-docker compose down
-```
-
-### Production Notes
-
-- Keep `.env` out of Git.
-- Use a long random `JWT_SECRET_KEY`.
-- Put the app behind HTTPS using a reverse proxy such as Nginx, Caddy, Azure App Service, or IIS.
-- For real production traffic, consider moving from SQLite to SQL Server, PostgreSQL, or another managed database.
-
-### Common Docker Issues
-
-If Docker build fails with a Docker engine error, start Docker Desktop and wait until it says the engine is running.
-
-If the app starts but JWT login fails, check that `.env` has a non-empty `JWT_SECRET_KEY`.
-
-If old data is still showing, reset the volume:
-
-```powershell
-docker compose down -v
-docker compose up --build -d
-```
-
-## CI Pipeline
-
-GitHub Actions workflow:
-
-```text
-.github/workflows/ci.yml
-```
-
-The workflow runs on pushes to `main`/`master` and on pull requests. It:
-
-- Restores NuGet packages.
-- Builds the API in Release mode.
-- Builds the Docker image as `gamestore-api:ci`.
-
-This is a validation pipeline only. To deploy to a real host, add a push step for your registry, such as Docker Hub, GitHub Container Registry, Azure Container Registry, or AWS ECR, then deploy that image to your server or cloud service.
 
 ## Database
 
@@ -265,16 +141,8 @@ Seed data is organized under `GameStore/Data/Seeders/`:
 
 - `RoleSeeder` creates `Admin` and `Customer`.
 - `GenreSeeder` creates default game genres.
+- `GameSeeder` creates default game catalog records.
 - `DatabaseSeeder` runs all seeders from one place.
-
-Application logs are stored in the `Logs` table through `ILogService` and `LogService`. The current log fields are:
-
-- `Level`
-- `Message`
-- `Source`
-- `Exception`
-- `UserId`
-- `CreatedAt`
 
 Create a migration from the repository root:
 
@@ -288,15 +156,9 @@ Apply migrations from the repository root:
 dotnet ef database update --project GameStore
 ```
 
-If your terminal is already inside `GameStore/`, use:
-
-```powershell
-dotnet ef database update
-```
-
 ## Authentication
 
-Login returns a JWT token:
+Login returns a wrapped JWT response:
 
 ```http
 POST http://localhost:5137/users/login
@@ -308,10 +170,31 @@ Content-Type: application/json
 }
 ```
 
+Example shape:
+
+```json
+{
+  "success": true,
+  "message": "User logged in successfully.",
+  "data": {
+    "token": "jwt-token-value",
+    "expiresAt": "2026-06-15T12:00:00Z",
+    "user": {
+      "id": 1,
+      "fullName": "Admin User",
+      "email": "admin@gamstore.com",
+      "roleId": 1
+    }
+  },
+  "errors": [],
+  "timestamp": "2026-06-15T10:00:00Z"
+}
+```
+
 In Swagger:
 
 1. Call `/users/login`.
-2. Copy only the `token` value.
+2. Copy only `data.token`.
 3. Click `Authorize`.
 4. Paste the token only, without typing `Bearer`.
 
@@ -389,7 +272,7 @@ Content-Type: application/json
 
 {
   "fullName": "Harsha Yenumula",
-  "email": "admin@gamstore.com",
+  "email": "customer@example.com",
   "password": "admin@123!",
   "roleId": 2
 }
@@ -436,33 +319,108 @@ More samples are available in:
 - `GameStore/games.http`
 - `GameStore/orders.http`
 
+## Docker Deployment
+
+The repository includes a Docker setup for local deployment and server deployment.
+
+Files:
+
+- `Dockerfile` builds and publishes the ASP.NET Core API.
+- `docker-compose.yml` runs the API on port `5137`.
+- `.env.example` shows required environment variables.
+- `.dockerignore` keeps build output, local DB files, and editor files out of the Docker build context.
+
+First-time setup:
+
+```powershell
+copy .env.example .env
+```
+
+Update `.env` with a strong JWT secret:
+
+```text
+JWT_SECRET_KEY=your-very-long-random-secret-key-here
+```
+
+Build and start:
+
+```powershell
+docker compose up --build -d
+```
+
+Verify:
+
+```powershell
+curl http://localhost:5137/health
+```
+
+View logs:
+
+```powershell
+docker compose logs -f gamestore-api
+```
+
+Stop:
+
+```powershell
+docker compose down
+```
+
+Reset Docker database volume:
+
+```powershell
+docker compose down -v
+docker compose up --build -d
+```
+
+Swagger is enabled only in `Development`. For local Docker testing, set this in `docker-compose.yml`:
+
+```yaml
+ASPNETCORE_ENVIRONMENT: Development
+```
+
+## CI Pipeline
+
+GitHub Actions workflow:
+
+```text
+.github/workflows/ci.yml
+```
+
+The workflow restores NuGet packages, builds the API in Release mode, and builds the Docker image as `gamestore-api:ci`.
+
 ## Audit Notes
 
 Completed audit updates:
 
-- README updated to match users, roles, games, genres, cart, checkout, and orders.
-- Stale weather request sample replaced with a current games request.
-- Hardcoded JWT removed from `users.http`.
-- Protected write examples now include `Authorization: Bearer {{token}}`.
-- JWT generation now includes the user's role claim, so role-based authorization can work.
-- Logout now revokes the current JWT server-side through the `RevokedTokens` table.
-- Added `Logs` table, `ILogService`, `LogService`, and a public `POST /logs` endpoint.
-- CRUD/write endpoints now save log records for user auth events, games, genres, roles, cart changes, and checkout.
+- Replaced minimal API endpoint files with MVC-style controllers.
+- Added repository interfaces in `Interfaces/` and EF implementations in `Repositories/`.
+- Moved all service/repository contracts, including `ILogService`, into `Interfaces/`.
+- Added `ApiResponse<T>` and wrapped controller, validation, authentication, authorization, root, and health responses.
+- Updated delete/logout actions to return a consistent response body.
+- Updated README to match the current architecture and response contract.
 
 Current risks and next improvements:
 
-- Public registration currently accepts `roleId`, so a caller can choose a role. In a production ecommerce app, registration should always create a `Customer`, and only an Admin should manage roles.
-- Role, game, and genre write endpoints currently require any authenticated user. A production app should usually restrict these to Admin.
-- `Jwt:SecretKey` is a local development value and should move to user secrets or environment variables for real deployments.
+- Public registration currently accepts `roleId`, so callers can choose their role. A production app should normally create public registrations as `Customer` only.
+- Role, game, and genre write endpoints currently require any authenticated user. Production management endpoints should usually be restricted to Admin.
+- `Jwt:SecretKey` in committed settings is for local development only. Use environment variables, user secrets, or a secret manager outside local development.
 - There is no automated test project yet.
 
 ## Verification
 
-Current manual verification commands:
+Because a running local API process can lock `bin/Debug`, a temp output build is useful during development:
 
 ```powershell
-dotnet build GameStore/GameStore.csproj
-dotnet ef database update --project GameStore
+dotnet build GameStore/GameStore.csproj -o C:\tmp\gamestore-build
+```
+
+Latest verification:
+
+```text
+Build succeeded.
+0 Warning(s)
+0 Error(s)
 ```
 
 When a test project is added, run:

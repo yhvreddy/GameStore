@@ -1,6 +1,6 @@
 using GameStore.Models;
 
-namespace GameStore.Services;
+namespace GameStore.Interfaces;
 
 public interface ILogService
 {
