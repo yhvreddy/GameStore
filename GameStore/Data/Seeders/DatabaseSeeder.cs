@@ -8,5 +8,6 @@ public static class DatabaseSeeder
     {
         RoleSeeder.Seed(context);
         GenreSeeder.Seed(context);
+        GameSeeder.Seed(context);
     }
 }

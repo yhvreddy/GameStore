@@ -21,3 +21,4 @@ obj/
 # Local environment files
 .env
 !.env.example
+.codex-build/
