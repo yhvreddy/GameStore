@@ -1,8 +1,10 @@
 using GameStore.Data;
-using GameStore.EndPoints;
+using GameStore.Dtos;
+using GameStore.Repositories;
 using GameStore.Services;
 using GameStore.Swagger;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
@@ -11,7 +13,23 @@ using System.Security.Claims;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddValidation();
+builder.Services.AddControllers()
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        options.InvalidModelStateResponseFactory = context =>
+        {
+            string[] errors = context.ModelState
+                .Where(modelState => modelState.Value?.Errors.Count > 0)
+                .SelectMany(modelState => modelState.Value!.Errors)
+                .Select(error => string.IsNullOrWhiteSpace(error.ErrorMessage)
+                    ? "The request is invalid."
+                    : error.ErrorMessage)
+                .ToArray();
+
+            return new BadRequestObjectResult(
+                ApiResponse<object>.Fail("Validation failed.", errors));
+        };
+    });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -31,6 +49,7 @@ builder.Services.AddSwaggerGen(options =>
 builder.Services.AddScoped<PasswordService>();
 builder.Services.AddScoped<JwtTokenService>();
 builder.Services.AddScoped<ILogService, LogService>();
+builder.Services.AddRepositories();
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -65,6 +84,19 @@ builder.Services
                 {
                     context.Fail("Token has been logged out.");
                 }
+            },
+            OnChallenge = async context =>
+            {
+                context.HandleResponse();
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                await context.Response.WriteAsJsonAsync(
+                    ApiResponse<object>.Fail("Authentication is required."));
+            },
+            OnForbidden = async context =>
+            {
+                context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                await context.Response.WriteAsJsonAsync(
+                    ApiResponse<object>.Fail("You do not have permission to access this resource."));
             }
         };
     });
@@ -82,19 +114,13 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.MapGet("/", () => "Hello World!").ExcludeFromDescription();
-app.MapGet("/health", () => Results.Ok(new { status = "Healthy" })).ExcludeFromDescription();
+app.MapGet("/", () => Results.Ok(ApiResponse<string>.Ok("GameStore API", "API is running."))).ExcludeFromDescription();
+app.MapGet("/health", () => Results.Ok(ApiResponse<object>.Ok(new { status = "Healthy" }, "Health check completed."))).ExcludeFromDescription();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapUserEndpoints();
-app.MapGameStoreEndpoints();
-app.MapGenreEndpoints();
-app.MapRoleEndpoints();
-app.MapCartEndpoints();
-app.MapOrderEndpoints();
-app.MapLogEndpoints();
+app.MapControllers();
 app.MigrationDb();
 
 app.Run();
